@@ -13,6 +13,7 @@ import '../services/audio_service.dart';
 import '../services/firebase_service.dart';
 import '../services/notification_service.dart';
 import '../services/save_service.dart';
+import '../services/feedback_service.dart';
 import '../services/vibration_service.dart';
 
 // Services
@@ -29,6 +30,7 @@ final analyticsServiceProvider = Provider<AnalyticsService>((ref) {
 });
 
 final audioServiceProvider = Provider<AudioService>((ref) => AudioService());
+final feedbackServiceProvider = Provider<FeedbackService>((ref) => FeedbackService());
 final vibrationServiceProvider =
     Provider<VibrationService>((ref) => VibrationService());
 final adsServiceProvider = Provider<AdsService>((ref) => AdsService());

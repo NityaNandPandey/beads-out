@@ -2,8 +2,10 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/app_theme.dart';
+import '../../../app/dependency_injection.dart';
 import '../../../core/constants/game_layout_constants.dart';
 import '../../../core/enums/game_state.dart';
 import '../../../game_engine/engine.dart';
@@ -12,8 +14,9 @@ import '../../../models/block_model.dart';
 import '../../../shared/widgets/collection_box.dart';
 import '../../../shared/widgets/color_block.dart';
 import '../../../shared/widgets/game_ui_components.dart';
+import '../../../shared/widgets/premium/fx_widgets.dart';
 
-class GameBoard extends StatefulWidget {
+class GameBoard extends ConsumerStatefulWidget {
   const GameBoard({
     super.key,
     required this.engine,
@@ -24,16 +27,20 @@ class GameBoard extends StatefulWidget {
   final VoidCallback onStateChanged;
 
   @override
-  State<GameBoard> createState() => _GameBoardState();
+  ConsumerState<GameBoard> createState() => _GameBoardState();
 }
 
-class _GameBoardState extends State<GameBoard>
+class _GameBoardState extends ConsumerState<GameBoard>
     with TickerProviderStateMixin {
   late Ticker _ticker;
   late Ticker _beltTicker;
   Duration _lastElapsed = Duration.zero;
   double _beltOffset = 0;
+  double _scaleX = 1;
+  double _scaleY = 1;
   final _blockKeys = <String, GlobalKey>{};
+  final _particles = <BurstParticle>[];
+  int _particleGeneration = 0;
 
   @override
   void initState() {
@@ -58,7 +65,24 @@ class _GameBoardState extends State<GameBoard>
     if (dt <= 0 || dt > 0.05) return;
 
     widget.engine.update(dt);
+
+    final events = widget.engine.drainSortEvents();
+    if (events.isNotEmpty) {
+      for (final event in events) {
+        for (var i = 0; i < 10; i++) {
+          _particles.add(BurstParticle.fromSort(
+            event.x * _scaleX,
+            event.y * _scaleY,
+            event.color,
+          ));
+        }
+      }
+      _particleGeneration++;
+      ref.read(feedbackServiceProvider).tap();
+    }
+
     widget.onStateChanged();
+    if (events.isNotEmpty) setState(() {});
   }
 
   @override
@@ -69,6 +93,8 @@ class _GameBoardState extends State<GameBoard>
   }
 
   void _tapBlock(String blockId) {
+    ref.read(feedbackServiceProvider).tap();
+
     final key = _blockKeys[blockId];
     final box = key?.currentContext?.findRenderObject() as RenderBox?;
     var spawnX = GameLayoutConstants.boardWidth / 2;
@@ -99,8 +125,8 @@ class _GameBoardState extends State<GameBoard>
       padding: const EdgeInsets.all(10),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final scaleX = constraints.maxWidth / GameLayoutConstants.boardWidth;
-          final scaleY = constraints.maxHeight / GameLayoutConstants.boardHeight;
+          _scaleX = constraints.maxWidth / GameLayoutConstants.boardWidth;
+          _scaleY = constraints.maxHeight / GameLayoutConstants.boardHeight;
 
           return Column(
             children: [
@@ -124,10 +150,17 @@ class _GameBoardState extends State<GameBoard>
                     ...engine.beads.where((b) => !b.isSorted).map(
                           (bead) => _BeadOnBoard(
                             bead: bead,
-                            scaleX: scaleX,
-                            scaleY: scaleY,
+                            scaleX: _scaleX,
+                            scaleY: _scaleY,
                           ),
                         ),
+                    if (_particles.isNotEmpty)
+                      Positioned.fill(
+                        child: ParticleBurstLayer(
+                          key: ValueKey(_particleGeneration),
+                          particles: _particles,
+                        ),
+                      ),
                   ],
                 ),
               ),
@@ -187,22 +220,22 @@ class _BlockShelf extends StatelessWidget {
         child: active.isEmpty
             ? const SizedBox.shrink()
             : GridView.builder(
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: min(4, active.length),
-                mainAxisSpacing: 2,
-                crossAxisSpacing: 2,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: min(4, active.length),
+                  mainAxisSpacing: 2,
+                  crossAxisSpacing: 2,
+                ),
+                itemCount: active.length,
+                itemBuilder: (context, index) {
+                  final block = active[index];
+                  return ColorBlock(
+                    key: blockKeys[block.id],
+                    block: block,
+                    onTap: () => onTap(block.id),
+                  );
+                },
               ),
-              itemCount: active.length,
-              itemBuilder: (context, index) {
-                final block = active[index];
-                return ColorBlock(
-                  key: blockKeys[block.id],
-                  block: block,
-                  onTap: () => onTap(block.id),
-                );
-              },
-            ),
       ),
     );
   }
@@ -242,7 +275,6 @@ class _ConveyorScenePainter extends CustomPainter {
     final beltY = GameLayoutConstants.conveyorY * scaleY - 18;
     const beltH = 48.0;
 
-    // Side rails
     final railPaint = Paint()
       ..color = AppTheme.conveyorRail
       ..strokeWidth = 5
@@ -255,7 +287,6 @@ class _ConveyorScenePainter extends CustomPainter {
       railPaint,
     );
 
-    // Belt body
     final beltRect = RRect.fromRectAndRadius(
       Rect.fromLTWH(10, beltY, size.width - 20, beltH),
       const Radius.circular(14),
@@ -271,13 +302,11 @@ class _ConveyorScenePainter extends CustomPainter {
         ).createShader(Rect.fromLTWH(0, beltY, size.width, beltH)),
     );
 
-    // Animated stripes
     final stripePaint = Paint()..color = Colors.white.withValues(alpha: 0.22);
     for (var x = -20 + beltOffset % 28; x < size.width; x += 28) {
       canvas.drawRect(Rect.fromLTWH(x, beltY + 6, 12, beltH - 12), stripePaint);
     }
 
-    // Fill danger overlay
     if (fill > 0.45) {
       canvas.drawRRect(
         beltRect,
@@ -287,7 +316,6 @@ class _ConveyorScenePainter extends CustomPainter {
       );
     }
 
-    // Belt border
     canvas.drawRRect(
       beltRect,
       Paint()
@@ -296,7 +324,6 @@ class _ConveyorScenePainter extends CustomPainter {
         ..strokeWidth = 2.5,
     );
 
-    // Arrow chevrons
     final arrowPaint = Paint()
       ..color = AppTheme.conveyorRail.withValues(alpha: 0.5)
       ..strokeWidth = 2.5
@@ -308,7 +335,6 @@ class _ConveyorScenePainter extends CustomPainter {
       canvas.drawLine(Offset(x + 10, cy), Offset(x, cy + 4), arrowPaint);
     }
 
-    // Chute lines to bottom
     final chutePaint = Paint()
       ..color = AppTheme.conveyorRail.withValues(alpha: 0.25)
       ..strokeWidth = 2;

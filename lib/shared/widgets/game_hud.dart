@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../app/app_theme.dart';
+import '../../shared/design/premium_design.dart';
 
 class GameHud extends StatelessWidget {
   const GameHud({
@@ -25,106 +25,93 @@ class GameHud extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+      margin: const EdgeInsets.fromLTRB(12, 6, 12, 8),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        gradient: AppTheme.panelBorderGradient,
-        boxShadow: AppTheme.glowShadow(AppTheme.primaryColor),
+        borderRadius: BorderRadius.circular(26),
+        gradient: PremiumDesign.rainbowBorder,
+        boxShadow: PremiumDesign.glow(PremiumDesign.royalPurple, blur: 16),
       ),
-      padding: const EdgeInsets.all(3),
+      padding: const EdgeInsets.all(2.5),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         decoration: BoxDecoration(
-          gradient: AppTheme.hudGradient,
-          borderRadius: BorderRadius.circular(21),
+          borderRadius: BorderRadius.circular(23),
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xCC5B21B6),
+              Color(0xCC4FACFE),
+              Color(0xCC7B2FF7),
+            ],
+          ),
         ),
         child: Column(
           children: [
             Row(
               children: [
-                _HudIconButton(icon: Icons.arrow_back_ios_new, onTap: onBack),
+                _HudBtn(icon: Icons.arrow_back_ios_new_rounded, onTap: onBack),
                 Expanded(
                   child: Column(
                     children: [
                       Text(
                         'LEVEL $levelNumber',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w900,
-                          fontSize: 20,
-                          letterSpacing: 1.5,
-                          shadows: [
-                            Shadow(color: Colors.black26, blurRadius: 4),
-                          ],
-                        ),
+                        style: PremiumDesign.button(size: 18),
                       ),
-                      const SizedBox(height: 2),
                       Text(
-                        '✨ Sort all the beads!',
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.85),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
+                        'Sort the beads!',
+                        style: PremiumDesign.body(size: 11, color: Colors.white70),
                       ),
                     ],
                   ),
                 ),
-                _HudIconButton(icon: Icons.pause_rounded, onTap: onPause),
+                _HudBtn(icon: Icons.pause_rounded, onTap: onPause),
               ],
             ),
             const SizedBox(height: 10),
             Row(
               children: [
-                _StatPill(
-                  icon: Icons.grain,
+                _Pill(
+                  icon: Icons.grain_rounded,
                   label: '$sortedBeads/$totalBeads',
-                  colors: const [AppTheme.secondaryColor, AppTheme.skyColor],
+                  colors: const [PremiumDesign.mintGreen, PremiumDesign.emerald],
                 ),
                 const SizedBox(width: 8),
-                _StatPill(
+                _Pill(
                   icon: Icons.star_rounded,
                   label: '$score',
-                  colors: const [AppTheme.goldColor, AppTheme.orangeColor],
+                  colors: PremiumDesign.goldGradient,
                 ),
                 const Spacer(),
                 SizedBox(
-                  width: 88,
+                  width: 92,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Text(
-                        'Belt',
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.85),
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
+                      Text('Belt', style: PremiumDesign.body(size: 10, color: Colors.white70)),
                       const SizedBox(height: 4),
                       ClipRRect(
                         borderRadius: BorderRadius.circular(8),
-                        child: Container(
+                        child: SizedBox(
                           height: 10,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.25),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: FractionallySizedBox(
-                            alignment: Alignment.centerLeft,
-                            widthFactor: conveyorFill.clamp(0.0, 1.0),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(8),
-                                gradient: LinearGradient(
-                                  colors: conveyorFill > 0.8
-                                      ? [AppTheme.warningColor, AppTheme.dangerColor]
-                                      : conveyorFill > 0.5
-                                          ? [AppTheme.goldColor, AppTheme.warningColor]
-                                          : [AppTheme.secondaryColor, AppTheme.playButtonColor],
+                          child: Stack(
+                            children: [
+                              Container(color: Colors.white24),
+                              FractionallySizedBox(
+                                widthFactor: conveyorFill.clamp(0.0, 1.0),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: conveyorFill > 0.8
+                                          ? [PremiumDesign.sunsetOrange, PremiumDesign.coralPink]
+                                          : conveyorFill > 0.5
+                                              ? PremiumDesign.goldGradient
+                                              : PremiumDesign.playGradient,
+                                    ),
+                                  ),
                                 ),
                               ),
-                            ),
+                            ],
                           ),
                         ),
                       ),
@@ -140,8 +127,8 @@ class GameHud extends StatelessWidget {
   }
 }
 
-class _HudIconButton extends StatelessWidget {
-  const _HudIconButton({required this.icon, this.onTap});
+class _HudBtn extends StatelessWidget {
+  const _HudBtn({required this.icon, this.onTap});
 
   final IconData icon;
   final VoidCallback? onTap;
@@ -149,31 +136,23 @@ class _HudIconButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.white.withValues(alpha: 0.25),
+      color: Colors.white24,
       shape: const CircleBorder(),
       child: InkWell(
         customBorder: const CircleBorder(),
         onTap: onTap,
-        child: Container(
+        child: SizedBox(
           width: 40,
           height: 40,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(color: Colors.white.withValues(alpha: 0.4)),
-          ),
-          child: Icon(icon, color: Colors.white, size: 18),
+          child: Icon(icon, color: Colors.white, size: 20),
         ),
       ),
     );
   }
 }
 
-class _StatPill extends StatelessWidget {
-  const _StatPill({
-    required this.icon,
-    required this.label,
-    required this.colors,
-  });
+class _Pill extends StatelessWidget {
+  const _Pill({required this.icon, required this.label, required this.colors});
 
   final IconData icon;
   final String label;
@@ -185,22 +164,15 @@ class _StatPill extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         gradient: LinearGradient(colors: colors),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.35)),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.white38),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: 14, color: Colors.white),
           const SizedBox(width: 4),
-          Text(
-            label,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w900,
-              fontSize: 13,
-            ),
-          ),
+          Text(label, style: PremiumDesign.currency(color: Colors.white)),
         ],
       ),
     );

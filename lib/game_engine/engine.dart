@@ -5,6 +5,7 @@ import '../models/block_model.dart';
 import '../models/conveyor_model.dart';
 import '../models/container_model.dart';
 import '../models/level_model.dart';
+import '../models/sort_event.dart';
 import 'bead_spawner.dart';
 import 'combo_engine.dart';
 import 'conveyor_engine.dart';
@@ -32,6 +33,14 @@ class GameEngine {
   List<BeadModel> beads = [];
   List<ContainerModel> containers = [];
   ConveyorModel? conveyor;
+  final List<SortEvent> _sortEvents = [];
+
+  List<SortEvent> drainSortEvents() {
+    if (_sortEvents.isEmpty) return const [];
+    final events = List<SortEvent>.from(_sortEvents);
+    _sortEvents.clear();
+    return events;
+  }
 
   void init() {
     blocks = level.blocks.map((b) => b.copyWith()).toList();
@@ -40,6 +49,7 @@ class GameEngine {
     score = 0;
     combo = 0;
     sortedBeads = 0;
+    _sortEvents.clear();
     totalBeads = blocks.fold(0, (sum, b) => sum + b.beadCount);
     state = GameState.playing;
 
@@ -76,6 +86,7 @@ class GameEngine {
     final result = sortingLogic.processBeads(beads);
     beads = result.beads;
     containers = sortingLogic.containers;
+    _sortEvents.addAll(result.events);
 
     for (var i = 0; i < result.sortedCount; i++) {
       scoreEngine.addScore(

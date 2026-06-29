@@ -1,3 +1,5 @@
+import 'package:flutter/services.dart';
+
 import '../core/logger/app_logger.dart';
 
 class VibrationService {
@@ -11,12 +13,12 @@ class VibrationService {
 
   Future<void> lightImpact() async {
     if (!_enabled) return;
-    AppLogger.debug('Light haptic feedback');
+    await HapticFeedback.lightImpact();
   }
 
   Future<void> mediumImpact() async {
     if (!_enabled) return;
-    AppLogger.debug('Medium haptic feedback');
+    await HapticFeedback.mediumImpact();
   }
 
   void setEnabled(bool enabled) => _enabled = enabled;

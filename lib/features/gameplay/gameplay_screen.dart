@@ -9,9 +9,10 @@ import '../../core/constants/route_constants.dart';
 import '../../core/enums/game_state.dart';
 import '../../game_engine/engine.dart';
 import '../../models/level_model.dart';
+import '../../shared/design/premium_design.dart';
+import '../../shared/widgets/premium/premium_dialog.dart';
+import '../../shared/widgets/premium/premium_widgets.dart';
 import '../../shared/widgets/game_hud.dart';
-import '../../shared/widgets/game_ui_components.dart';
-import '../../shared/widgets/pastel_background.dart';
 import 'widgets/game_board.dart';
 
 class GameplayScreen extends ConsumerStatefulWidget {
@@ -80,9 +81,9 @@ class _GameplayScreenState extends ConsumerState<GameplayScreen> {
   Widget build(BuildContext context) {
     if (_loading || _level == null || _engine == null) {
       return Scaffold(
-        body: PastelBackground(
+        body: PremiumBackground(
           child: Center(
-            child: CircularProgressIndicator(color: AppTheme.primaryColor),
+            child: CircularProgressIndicator(color: PremiumDesign.cyanGlow),
           ),
         ),
       );
@@ -93,7 +94,7 @@ class _GameplayScreenState extends ConsumerState<GameplayScreen> {
         engine.state == GameState.levelComplete;
 
     return Scaffold(
-      body: PastelBackground(
+      body: PremiumBackground(
         child: SafeArea(
           child: Stack(
             children: [
@@ -130,17 +131,26 @@ class _GameplayScreenState extends ConsumerState<GameplayScreen> {
                 ],
               ),
               if (engine.state == GameState.paused)
-                _PauseOverlay(
-                  onResume: () => setState(engine.resume),
+                PremiumOverlay(
+                  child: PremiumDialog(
+                    title: 'Paused',
+                    subtitle: 'Take a breath — the belt waits for you.',
+                    icon: Icons.pause_circle_filled_rounded,
+                    iconColors: const [PremiumDesign.oceanBlue, PremiumDesign.royalPurple],
+                    primaryLabel: 'Resume',
+                    onPrimary: () => setState(engine.resume),
+                  ),
                 ),
               if (isEnded)
-                _EndOverlay(
-                  engine: engine,
-                  levelNumber: widget.levelNumber,
-                  onRetry: _loadLevel,
-                  onExit: () => context.pop(),
-                  onNext: () => context.pushReplacement(
-                    '${RouteConstants.gameplay}?level=${widget.levelNumber + 1}',
+                PremiumOverlay(
+                  child: _EndOverlay(
+                    engine: engine,
+                    levelNumber: widget.levelNumber,
+                    onRetry: _loadLevel,
+                    onExit: () => context.pop(),
+                    onNext: () => context.pushReplacement(
+                      '${RouteConstants.gameplay}?level=${widget.levelNumber + 1}',
+                    ),
                   ),
                 ),
             ],
@@ -197,48 +207,6 @@ class _ConveyorWarning extends StatelessWidget {
   }
 }
 
-class _PauseOverlay extends StatelessWidget {
-  const _PauseOverlay({required this.onResume});
-
-  final VoidCallback onResume;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      color: Colors.black45,
-      alignment: Alignment.center,
-      child: GamePanel(
-        padding: const EdgeInsets.all(28),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.pause_circle_filled_rounded, size: 64, color: AppTheme.primaryColor),
-            const SizedBox(height: 12),
-            const Text(
-              'Paused',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.w900,
-                color: AppTheme.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: GameButton3D(
-                label: 'Resume',
-                icon: Icons.play_arrow_rounded,
-                onTap: onResume,
-                expand: true,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class _EndOverlay extends StatelessWidget {
   const _EndOverlay({
     required this.engine,
@@ -259,104 +227,36 @@ class _EndOverlay extends StatelessWidget {
     final isWin = engine.state == GameState.levelComplete;
     final stars = engine.calculateStars();
 
-    return Container(
-      color: Colors.black45,
-      alignment: Alignment.center,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 28),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 340),
-          child: GamePanel(
-            padding: const EdgeInsets.fromLTRB(28, 32, 28, 28),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (isWin)
-                  const GradientTitle(text: 'Level Complete!', fontSize: 28)
-                else
-                  const GradientTitle(text: 'Belt Overflow!', fontSize: 28),
-                const SizedBox(height: 10),
-                Text(
-                  isWin
-                      ? 'All beads sorted perfectly!'
-                      : 'Too many beads on the belt. Try again!',
-                  style: const TextStyle(
-                    color: AppTheme.textSecondary,
-                    fontSize: 14,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                if (isWin) ...[
-                  const SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(
-                      3,
-                      (i) => Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
-                        child: Icon(
-                          i < stars
-                              ? Icons.star_rounded
-                              : Icons.star_outline_rounded,
-                          color: AppTheme.goldColor,
-                          size: 40,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Score: ${engine.score}',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 18,
-                      color: AppTheme.textPrimary,
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 28),
-                Row(
-                  children: [
-                    Expanded(
-                      child: GameButton3D(
-                        label: 'Retry',
-                        color: AppTheme.accentColor,
-                        onTap: onRetry,
-                        height: 50,
-                        expand: true,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: isWin && levelNumber < AppConstants.totalLevels
-                          ? GameButton3D(
-                              label: 'Next',
-                              onTap: onNext,
-                              height: 50,
-                              expand: true,
-                            )
-                          : isWin
-                              ? GameButton3D(
-                                  label: 'Home',
-                                  onTap: onExit,
-                                  height: 50,
-                                  expand: true,
-                                )
-                              : GameButton3D(
-                                  label: 'Exit',
-                                  color: AppTheme.primaryColor,
-                                  onTap: onExit,
-                                  height: 50,
-                                  expand: true,
-                                ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
+    if (isWin) {
+      return PremiumDialog(
+        title: 'Level Complete!',
+        subtitle: 'All beads sorted perfectly!',
+        icon: Icons.emoji_events_rounded,
+        iconColors: PremiumDesign.playGradient,
+        showStars: true,
+        starCount: stars,
+        showConfetti: true,
+        collectCoins: true,
+        extra: Text(
+          'Score: ${engine.score}',
+          style: PremiumDesign.heading(size: 18, color: PremiumDesign.textDark),
         ),
-      ),
+        primaryLabel: levelNumber < AppConstants.totalLevels ? 'Next Level' : 'Home',
+        onPrimary: levelNumber < AppConstants.totalLevels ? onNext : onExit,
+        secondaryLabel: 'Retry',
+        onSecondary: onRetry,
+      );
+    }
+
+    return PremiumDialog(
+      title: 'Belt Overflow!',
+      subtitle: 'Too many beads on the conveyor. Try a new strategy!',
+      icon: Icons.warning_amber_rounded,
+      iconColors: const [PremiumDesign.sunsetOrange, PremiumDesign.coralPink],
+      primaryLabel: 'Retry',
+      onPrimary: onRetry,
+      secondaryLabel: 'Home',
+      onSecondary: onExit,
     );
   }
 }

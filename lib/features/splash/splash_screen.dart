@@ -2,14 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../app/app_theme.dart';
 import '../../app/dependency_injection.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/constants/route_constants.dart';
-import '../../core/enums/bead_color.dart';
 import '../../core/logger/app_logger.dart';
-import '../../shared/widgets/game_ui_components.dart';
-import '../../shared/widgets/pastel_background.dart';
+import '../../shared/design/premium_design.dart';
+import '../../shared/widgets/premium/premium_widgets.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -19,26 +17,31 @@ class SplashScreen extends ConsumerStatefulWidget {
 }
 
 class _SplashScreenState extends ConsumerState<SplashScreen>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
+    with TickerProviderStateMixin {
+  late AnimationController _logo;
+  late AnimationController _progress;
+  double _loadProgress = 0;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1400),
-    )..repeat(reverse: true);
+    _logo = AnimationController(vsync: this, duration: const Duration(milliseconds: 1600))
+      ..repeat(reverse: true);
+    _progress = AnimationController(vsync: this, duration: const Duration(milliseconds: 2200));
     _initialize();
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _logo.dispose();
+    _progress.dispose();
     super.dispose();
   }
 
   Future<void> _initialize() async {
+    _progress.forward();
+    _progress.addListener(() => setState(() => _loadProgress = _progress.value));
+
     await ref.read(audioServiceProvider).init();
     await ref.read(adsServiceProvider).init();
 
@@ -55,9 +58,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
           ]);
         }
       } catch (error) {
-        AppLogger.warning(
-          'Cloud sync skipped — continuing with local save: $error',
-        );
+        AppLogger.warning('Cloud sync skipped: $error');
       }
     }
 
@@ -75,83 +76,52 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: PastelBackground(
+      body: PremiumBackground(
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               AnimatedBuilder(
-                animation: _controller,
-                builder: (context, child) {
-                  return Transform.scale(
-                    scale: 1.0 + _controller.value * 0.08,
-                    child: child,
-                  );
-                },
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Container(
-                      width: 150,
-                      height: 150,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: RadialGradient(
-                          colors: [
-                            AppTheme.goldColor.withValues(alpha: 0.4),
-                            Colors.transparent,
-                          ],
-                        ),
-                      ),
+                animation: _logo,
+                builder: (context, child) => Transform.scale(
+                  scale: 1 + _logo.value * 0.06,
+                  child: child,
+                ),
+                child: Container(
+                  width: 130,
+                  height: 130,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: const LinearGradient(
+                      colors: PremiumDesign.playGradient,
                     ),
-                    Container(
-                      width: 130,
-                      height: 130,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: AppTheme.hudGradient,
-                        boxShadow: AppTheme.glowShadow(AppTheme.primaryColor),
-                        border: Border.all(color: Colors.white, width: 5),
-                      ),
-                      child: const Icon(Icons.grain, size: 62, color: Colors.white),
-                    ),
-                    for (var i = 0; i < 6; i++)
-                      Transform.rotate(
-                        angle: _controller.value * 6.28 + i * 1.05,
-                        child: Transform.translate(
-                          offset: const Offset(0, -78),
-                          child: BeadSphere(
-                            color: BeadColor.values[i],
-                            size: 16,
-                          ),
-                        ),
-                      ),
-                  ],
+                    border: Border.all(color: Colors.white, width: 5),
+                    boxShadow: PremiumDesign.glow(PremiumDesign.mintGreen, blur: 30),
+                  ),
+                  child: const Icon(Icons.grain_rounded, color: Colors.white, size: 64),
                 ),
               ),
-              const SizedBox(height: 32),
-              const GradientTitle(
-                text: AppConstants.appName,
-                fontSize: 42,
-                letterSpacing: 2,
+              const SizedBox(height: 28),
+              Text(
+                AppConstants.appName.toUpperCase(),
+                style: PremiumDesign.display(size: 38, color: Colors.white),
               ),
-              const SizedBox(height: 12),
-              const Text(
-                'Sort the beads, beat the belt!',
-                style: TextStyle(
-                  color: AppTheme.textSecondary,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
+              const SizedBox(height: 8),
+              Text(
+                'Loading your puzzle world…',
+                style: PremiumDesign.body(size: 15, color: Colors.white70),
               ),
-              const SizedBox(height: 52),
+              const SizedBox(height: 40),
               SizedBox(
-                width: 40,
-                height: 40,
-                child: CircularProgressIndicator(
-                  strokeWidth: 4,
-                  color: AppTheme.primaryColor,
-                  backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.2),
+                width: 220,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: LinearProgressIndicator(
+                    value: _loadProgress,
+                    minHeight: 10,
+                    backgroundColor: Colors.white24,
+                    color: PremiumDesign.goldenYellow,
+                  ),
                 ),
               ),
             ],
