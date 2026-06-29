@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "197881816844",
+    "project_id": "beads-out-qmet",
+    "storage_bucket": "beads-out-qmet.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:197881816844:android:df869efd6a7bdcaa688b29",
+        "android_client_info": {
+          "package_name": "com.qmet.beadsout"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCNVXLBF6GUKFD68hzCrtz5M1LACurQ1tc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

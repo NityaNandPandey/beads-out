@@ -1,0 +1,39 @@
+{
+  "auth": {
+    "providers": {
+      "anonymous": true
+    }
+  },
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "beads-out-qmet",
+          "appId": "1:197881816844:android:df869efd6a7bdcaa688b29",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "ios": {
+        "default": {
+          "projectId": "beads-out-qmet",
+          "appId": "1:197881816844:ios:88716cd55eb58c30688b29",
+          "uploadDebugSymbols": true,
+          "fileOutput": "ios/Runner/GoogleService-Info.plist"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "beads-out-qmet",
+          "configurations": {
+            "android": "1:197881816844:android:df869efd6a7bdcaa688b29",
+            "ios": "1:197881816844:ios:88716cd55eb58c30688b29"
+          }
+        }
+      }
+    }
+  }
+}

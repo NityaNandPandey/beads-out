@@ -1,0 +1,19 @@
+{
+  "id": "level_001",
+  "levelNumber": 1,
+  "difficulty": "easy",
+  "conveyorCapacity": 20,
+  "conveyorSpeed": 1.0,
+  "targetScore": 100,
+  "starsRequired": 1,
+  "blocks": [
+    { "id": "block_0", "color": "red", "row": 0, "col": 0, "beadCount": 5 },
+    { "id": "block_1", "color": "blue", "row": 0, "col": 1, "beadCount": 4 },
+    { "id": "block_2", "color": "green", "row": 0, "col": 2, "beadCount": 3 }
+  ],
+  "containers": [
+    { "id": "container_red", "color": "red", "capacity": 15, "position": 0 },
+    { "id": "container_blue", "color": "blue", "capacity": 15, "position": 1 },
+    { "id": "container_green", "color": "green", "capacity": 15, "position": 2 }
+  ]
+}

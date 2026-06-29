@@ -1,0 +1,28 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+
+      match /data/{docId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+
+    match /levels/{levelId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    match /leaderboard/{entryId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == entryId;
+    }
+
+    match /daily_challenges/{docId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+  }
+}

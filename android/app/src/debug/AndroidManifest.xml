@@ -1,0 +1,11 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Required for Flutter tooling (hot reload, breakpoints). -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+
+    <application>
+        <!-- Avoid GMS phenotype / AppMeasurementJobService noise on debug emulators. -->
+        <meta-data
+            android:name="firebase_analytics_collection_deactivated"
+            android:value="true" />
+    </application>
+</manifest>
